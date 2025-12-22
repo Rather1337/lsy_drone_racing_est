@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Check if environment variable is already set
+if [ -z "$PIXI_PROJECT_ROOT" ]; then
+    echo "[Setup Acados] Not running inside a Pixi environment; skipping setup_acados.sh"
+    exit 0
+fi
+
+# Check if pixi env is properly set up
+if [ ! -f ${PIXI_PROJECT_ROOT}/pixi.lock ]; then
+  echo "[Setup Acados] ERROR: pixi environment is not properly set up."
+  exit 0
+fi
+
 ACADOS_DIR="${PIXI_PROJECT_ROOT}/acados"
 
 # Clone and build acados
@@ -14,14 +26,19 @@ if [ ! -d ${ACADOS_DIR}/.git ]; then
   )
 fi
 
+# Check if pip is installed
+if ! command -v pip >/dev/null 2>&1; then
+  echo "[Setup Acados] ERROR: pip is not installed. Please install pip first."
+  exit 0
+fi
+
+# Build Acados
 if [ ! -f ${ACADOS_DIR}/lib/libacados.so ]; then
   echo "[Setup Acados] Building acados..."
   mkdir -p ${ACADOS_DIR}/build
   (
     cd ${ACADOS_DIR}/build
-    # cmake -DACADOS_WITH_QPOASES=ON ..
     cmake -DACADOS_WITH_QPOASES=ON -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ..
-    #  -DCMAKE_CXX_STANDARD=11 ..
     make install -j"$(nproc)"
   )
 fi

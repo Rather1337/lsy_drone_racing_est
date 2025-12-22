@@ -37,7 +37,7 @@ class MultiDroneRaceEnv(RaceCoreEnv, Env):
         control_mode: Literal["state", "attitude"] = "state",
         disturbances: ConfigDict | None = None,
         randomizations: ConfigDict | None = None,
-        seed: int = 1337,
+        seed: str | int = "random",
         max_episode_steps: int = 1500,
         device: Literal["cpu", "gpu"] = "cpu",
     ):
@@ -52,7 +52,7 @@ class MultiDroneRaceEnv(RaceCoreEnv, Env):
             control_mode: Control mode for the drones. See `build_action_space` for details.
             disturbances: Disturbance configuration.
             randomizations: Randomization configuration.
-            seed: Random seed.
+            seed: "random" for a generated seed or the random seed directly.
             max_episode_steps: Maximum number of steps per episode.
             device: Device used for the environment and the simulation.
         """
@@ -71,7 +71,9 @@ class MultiDroneRaceEnv(RaceCoreEnv, Env):
             max_episode_steps=max_episode_steps,
             device=device,
         )
-        self.action_space = batch_space(build_action_space(control_mode), n_drones)
+        self.action_space = batch_space(
+            build_action_space(control_mode, sim_config.drone_model), n_drones
+        )
         self.observation_space = batch_space(
             build_observation_space(n_gates, n_obstacles), n_drones
         )
@@ -162,7 +164,9 @@ class VecMultiDroneRaceEnv(RaceCoreEnv, VectorEnv):
             device=device,
         )
         self.num_envs = num_envs
-        self.single_action_space = batch_space(build_action_space(control_mode), n_drones)
+        self.single_action_space = batch_space(
+            build_action_space(control_mode, sim_config.drone_model), n_drones
+        )
         self.action_space = batch_space(batch_space(self.single_action_space), num_envs)
         self.single_observation_space = batch_space(
             build_observation_space(n_gates, n_obstacles), n_drones
